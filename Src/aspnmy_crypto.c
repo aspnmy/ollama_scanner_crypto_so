@@ -237,10 +237,11 @@ int write_key_file(const char* key) {
 }
 
 void print_help() {
-    printf("用法: aspnmy_crypto {encrypt|decrypt|genkey} [text]\n");
+    printf("用法: aspnmy_crypto {ver|encrypt|decrypt|genkey} [text]\n");
     printf("  encrypt [text] - 加密文本\n");
     printf("  decrypt [text] - 解密文本\n");
     printf("  genkey        - 生成新密钥\n");
+    printf("  ver        - 查询版本号\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -311,7 +312,12 @@ int main(int argc, char *argv[]) {
         }
         return 1;
     }
-
+    // 如果命令为 ver 返回文件版本号
+    if (strcmp(command, "ver") == 0) {
+        
+            printf("OS:linux_amd64 Verstion:1.0.1 Author:aspnmy/support@e2bank.cn \n");
+            return 1;
+    }
     print_help();
     return 1;
 }
