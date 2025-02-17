@@ -77,8 +77,9 @@ char* encrypt_text(const char* plaintext, const char* key) {
     EVP_EncodeBlock((unsigned char*)result, ciphertext, outlen + tmplen + IV_LENGTH);
     
     // 检查 Base64 编码后的长度
-    size_t base64_len = strlen(result);
-    printf("Base64 encoded length: %zu\n", base64_len); // 调试信息
+    // 调试代码
+    // size_t base64_len = strlen(result);
+    // printf("Base64 encoded length: %zu\n", base64_len); // 调试信息
 
     free(ciphertext);
     
@@ -87,7 +88,8 @@ char* encrypt_text(const char* plaintext, const char* key) {
 
 // 解密函数
 char* decrypt_text(const char* ciphertext, const char* key) {
-    printf("decrypt_text called with ciphertext: %s, key: %s\n", ciphertext, key);
+    //调试信息
+    //printf("decrypt_text called with ciphertext: %s, key: %s\n", ciphertext, key);
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {
         return strdup("ERROR: 无法创建加密上下文");
