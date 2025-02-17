@@ -12,6 +12,7 @@
 #define KEY_FILE ".crypto_key"
 #define KEY_LENGTH 32
 #define IV_LENGTH 16
+#define AES_BLOCK_SIZE 16  // 新增AES块大小定义
 #define BUFFER_SIZE 4096
 
 // OpenSSL 初始化
@@ -74,6 +75,11 @@ char* encrypt_text(const char* plaintext, const char* key) {
     }
 
     EVP_EncodeBlock((unsigned char*)result, ciphertext, outlen + tmplen + IV_LENGTH);
+    
+    // 检查 Base64 编码后的长度
+    size_t base64_len = strlen(result);
+    printf("Base64 encoded length: %zu\n", base64_len); // 调试信息
+
     free(ciphertext);
     
     return result;
@@ -81,6 +87,7 @@ char* encrypt_text(const char* plaintext, const char* key) {
 
 // 解密函数
 char* decrypt_text(const char* ciphertext, const char* key) {
+    printf("decrypt_text called with ciphertext: %s, key: %s\n", ciphertext, key);
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {
         return strdup("ERROR: 无法创建加密上下文");
@@ -96,14 +103,38 @@ char* decrypt_text(const char* ciphertext, const char* key) {
         return strdup("ERROR: 内存分配失败");
     }
 
-    EVP_DecodeBlock(decoded, (unsigned char*)ciphertext, cipherlen);
+    int decoded_len = EVP_DecodeBlock(decoded, (unsigned char*)ciphertext, cipherlen);
+    if (decoded_len < 0) {
+        EVP_CIPHER_CTX_free(ctx);
+        free(decoded);
+        return strdup("ERROR: Base64解码失败");
+    }
+
+    // 计算填充修正
+    int padding = 0;
+    if (cipherlen > 0 && ciphertext[cipherlen-1] == '=') {
+        padding++;
+        if (cipherlen > 1 && ciphertext[cipherlen-2] == '=') {
+            padding++;
+        }
+    }
+    decoded_len -= padding;
+
+    printf("Adjusted Base64 decoded length: %d\n", decoded_len);
+
+    // 校验解码后的数据长度
+    if (decoded_len < IV_LENGTH || (decoded_len - IV_LENGTH) % AES_BLOCK_SIZE != 0) {
+        EVP_CIPHER_CTX_free(ctx);
+        free(decoded);
+        return strdup("ERROR: 解码后的数据长度不合法");
+    }
     
     // 提取 IV
     unsigned char iv[IV_LENGTH];
     memcpy(iv, decoded, IV_LENGTH);
     
     // 分配输出缓冲区
-    unsigned char* plaintext = malloc(cipherlen);
+    unsigned char* plaintext = malloc(decoded_len);  // 使用修正后的长度
     if (!plaintext) {
         EVP_CIPHER_CTX_free(ctx);
         free(decoded);
@@ -124,8 +155,8 @@ char* decrypt_text(const char* ciphertext, const char* key) {
         return err_msg;
     }
     
-    // 解密数据
-    if (!EVP_DecryptUpdate(ctx, plaintext, &outlen, decoded + IV_LENGTH, cipherlen - IV_LENGTH) ||
+    // 解密数据（使用修正后的长度）
+    if (!EVP_DecryptUpdate(ctx, plaintext, &outlen, decoded + IV_LENGTH, decoded_len - IV_LENGTH) ||
         !EVP_DecryptFinal_ex(ctx, plaintext + outlen, &tmplen)) {
         unsigned long err = ERR_get_error();
         char err_buf[256];

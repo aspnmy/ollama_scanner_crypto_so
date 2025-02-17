@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O2 -Wall
+CFLAGS = -Wall -O2
 LDFLAGS = -lcrypto
 
 TARGET = aspnmy_crypto
@@ -11,6 +11,7 @@ INSTALL_DIR = /usr/local/bin
 
 all:
 	$(CC) $(CFLAGS) -o $(build_DIR)/$(TARGET) $(SRC) $(LDFLAGS)
+	chmod +x $(build_DIR)/$(TARGET)
 
 install:
 	cp $(build_DIR)/$(TARGET) $(INSTALL_DIR)
@@ -18,8 +19,12 @@ install:
 uninstall:
 	rm -f $(INSTALL_DIR)/$(TARGET)
 
+
+clean:
+	rm -f $(build_DIR)/$(TARGET)
+	
+
 package:
 	bash package.sh 
 
-# 定义伪目标，避免与实际文件冲突
 .PHONY: all install uninstall package
