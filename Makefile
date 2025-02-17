@@ -7,6 +7,8 @@ SRC = Src/aspnmy_crypto.c
 
 build_DIR = bin
 
+package_DIR = build/packages
+
 INSTALL_DIR = /usr/local/bin
 
 all:
@@ -22,6 +24,7 @@ uninstall:
 
 clean:
 	rm -f $(build_DIR)/$(TARGET)
+	rm -f $(package_DIR)/*
 	
 
 package:

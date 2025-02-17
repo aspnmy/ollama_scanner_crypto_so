@@ -121,8 +121,8 @@ char* decrypt_text(const char* ciphertext, const char* key) {
         }
     }
     decoded_len -= padding;
-
-    printf("Adjusted Base64 decoded length: %d\n", decoded_len);
+    // // 调试代码
+    // printf("Adjusted Base64 decoded length: %d\n", decoded_len);
 
     // 校验解码后的数据长度
     if (decoded_len < IV_LENGTH || (decoded_len - IV_LENGTH) % AES_BLOCK_SIZE != 0) {
