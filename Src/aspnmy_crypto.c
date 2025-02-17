@@ -83,7 +83,7 @@ char* encrypt_text(const char* plaintext, const char* key) {
 char* decrypt_text(const char* ciphertext, const char* key) {
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {
-        return NULL;
+        return strdup("ERROR: 无法创建加密上下文");
     }
 
     int outlen, tmplen;
@@ -93,7 +93,7 @@ char* decrypt_text(const char* ciphertext, const char* key) {
     unsigned char* decoded = malloc(cipherlen);
     if (!decoded) {
         EVP_CIPHER_CTX_free(ctx);
-        return NULL;
+        return strdup("ERROR: 内存分配失败");
     }
 
     EVP_DecodeBlock(decoded, (unsigned char*)ciphertext, cipherlen);
@@ -107,32 +107,41 @@ char* decrypt_text(const char* ciphertext, const char* key) {
     if (!plaintext) {
         EVP_CIPHER_CTX_free(ctx);
         free(decoded);
-        return NULL;
+        return strdup("ERROR: 内存分配失败");
     }
     
     // 初始化解密
     if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, (unsigned char*)key, iv)) {
+        unsigned long err = ERR_get_error();
+        char err_buf[256];
+        ERR_error_string_n(err, err_buf, sizeof(err_buf));
         EVP_CIPHER_CTX_free(ctx);
         free(decoded);
         free(plaintext);
-        return NULL;
+        size_t msg_len = strlen("ERROR: ") + strlen(err_buf) + 1;
+        char* err_msg = malloc(msg_len);
+        snprintf(err_msg, msg_len, "ERROR: %s", err_buf);
+        return err_msg;
     }
     
     // 解密数据
-    if (!EVP_DecryptUpdate(ctx, plaintext, &outlen, 
-                          decoded + IV_LENGTH, cipherlen - IV_LENGTH) ||
+    if (!EVP_DecryptUpdate(ctx, plaintext, &outlen, decoded + IV_LENGTH, cipherlen - IV_LENGTH) ||
         !EVP_DecryptFinal_ex(ctx, plaintext + outlen, &tmplen)) {
+        unsigned long err = ERR_get_error();
+        char err_buf[256];
+        ERR_error_string_n(err, err_buf, sizeof(err_buf));
         EVP_CIPHER_CTX_free(ctx);
         free(decoded);
         free(plaintext);
-        return NULL;
+        size_t msg_len = strlen("ERROR: ") + strlen(err_buf) + 1;
+        char* err_msg = malloc(msg_len);
+        snprintf(err_msg, msg_len, "ERROR: %s", err_buf);
+        return err_msg;
     }
     
-    // 清理
     EVP_CIPHER_CTX_free(ctx);
     free(decoded);
     
-    // 确保字符串结束
     plaintext[outlen + tmplen] = '\0';
     return (char*)plaintext;
 }
@@ -212,9 +221,8 @@ int main(int argc, char *argv[]) {
     }
 
     const char* command = argv[1];
-    char* key = getenv("CRYPTO_KEY");
-    if (!key) key = read_key_file();
 
+    // 如果命令为 genkey，则生成并更新 key 文件（手工更新）
     if (strcmp(command, "genkey") == 0) {
         char* new_key = generate_key();
         if (new_key && write_key_file(new_key)) {
@@ -225,8 +233,13 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    // 对于 encrypt 和 decrypt 命令，仅读取现有 key，不自动更新
+    char* key = getenv("CRYPTO_KEY");
     if (!key) {
-        fprintf(stderr, "错误: 未找到密钥，请先运行 genkey\n");
+        key = read_key_file();
+    }
+    if (!key) {
+        fprintf(stderr, "错误: 未找到密钥，请先运行 genkey 命令生成或更新密钥\n");
         return 1;
     }
 

@@ -1,0 +1,34 @@
+# 打包配置文件
+PACKAGE_NAME="ollama_scanner_crypto_so"
+VERSION="1.0.0"
+BASE_DIR="/root/gitdata/ollama_scanner/lib/crypto/ollama_scanner_crypto_so"
+
+# 需要打包的目录和文件
+INCLUDE_DIRS=(
+    
+    "bin/"
+)
+
+# 需要打包的具体文件
+INCLUDE_FILES=(
+    "ollama_scanner_crypto_so"
+    
+)
+
+# 需要排除的模式
+EXCLUDE_PATTERNS=(
+    "*.log"
+    "*.tmp"
+    "*.swp"
+    ".git"
+    "build"
+    "node_modules"
+)
+
+# 构建信息
+BUILD_INFO=(
+    "BUILD_USER=root"
+    "BUILD_TIME=2025-02-17 06:19:15"
+    "BUILD_VERSION=1.0.0"
+    "BUILD_COMMIT=0ce7ba2"
+)
