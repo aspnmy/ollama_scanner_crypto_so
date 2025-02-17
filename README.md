@@ -1,0 +1,2 @@
+# ollama_scanner_crypto_so
+主要用于对敏感数据进行加解密保存的工具
