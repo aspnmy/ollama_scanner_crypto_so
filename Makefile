@@ -4,6 +4,7 @@ LDFLAGS = -lcrypto
 
 TARGET = aspnmy_crypto
 SRC = Src/aspnmy_crypto.c
+HEADERS=Src/aspnmy_crypto.h
 
 build_DIR = bin
 
